@@ -13,7 +13,7 @@ using UnityEditor;
 // credit: Hellium
 // source: https://answers.unity.com/questions/1487864/change-a-variable-name-only-on-the-inspector.html
 
-public class RenameAttribute : ModifiablePropertyAttribute
+public class RenameAttribute : ModifiedPropertyAttribute
 {
     public string NewName { get; private set; }
     public RenameAttribute(string name)

@@ -38,7 +38,7 @@ using UnityEditor;
 ///  [replaceWithValue] can be applied on field with type of String or GameObject only.
 ///  </para>
 /// </summary>
-public class LabelArrayAttribute : ModifiablePropertyAttribute
+public class LabelArrayAttribute : ModifiedPropertyAttribute
 {
     public string TargetName { get; private set; }
     public bool ReplaceWithValue { get; private set; }

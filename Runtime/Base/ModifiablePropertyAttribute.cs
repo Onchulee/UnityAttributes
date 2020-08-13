@@ -1,24 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-[AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-public class ModifiablePropertyAttribute : PropertyAttribute
+namespace UnityEngine
 {
-    public List<PropertyModifierAttribute> modifiers = null;
-
-#if UNITY_EDITOR
-    public virtual void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+    [AttributeUsage(AttributeTargets.Field, Inherited = true)]
+    public class ModifiablePropertyAttribute : PropertyAttribute
     {
-        EditorGUI.PropertyField(position, property, label);
+        public override string ToString()
+        {
+            return this.GetType().Name;
+        }
     }
-
-    public virtual float GetPropertyHeight(SerializedProperty property, GUIContent label)
-    {
-        return EditorGUI.GetPropertyHeight(property, label);
-    }
-#endif
 }

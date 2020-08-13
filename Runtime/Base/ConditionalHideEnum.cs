@@ -1,0 +1,1 @@
+﻿public enum ConditionalHide { True, False }

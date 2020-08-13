@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Reflection;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -40,41 +41,37 @@ using UnityEditor;
 /// </para>
 /// </summary>
 
-//[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property |
-//    AttributeTargets.Class | AttributeTargets.Struct, Inherited = true)]
 public class ConditionalHideAttribute : PropertyModifierAttribute
 {
-    public enum Condition { True, False}
-
     //The name of the bool field that will be in control
     public string ConditionalSourceField = "";
     //TRUE = Hide in inspector / FALSE = Disable in inspector 
     public bool HideInInspector = false;
     // Condition that apply this attribute
-    public Condition ApplyCondition = Condition.True;
+    public ConditionalHide ApplyCondition = ConditionalHide.True;
     
     public ConditionalHideAttribute(string conditionalSourceField)
     {
         this.ConditionalSourceField = conditionalSourceField;
         this.HideInInspector = false;
-        this.ApplyCondition = Condition.True;
+        this.ApplyCondition = ConditionalHide.True;
     }
     
     public ConditionalHideAttribute(string conditionalSourceField, bool hideInInspector)
     {
         this.ConditionalSourceField = conditionalSourceField;
         this.HideInInspector = hideInInspector;
-        this.ApplyCondition = Condition.True;
+        this.ApplyCondition = ConditionalHide.True;
     }
     
-    public ConditionalHideAttribute(string conditionalSourceField, Condition condition)
+    public ConditionalHideAttribute(string conditionalSourceField, ConditionalHide condition)
     {
         this.ConditionalSourceField = conditionalSourceField;
         this.HideInInspector = false;
         this.ApplyCondition = condition;
     }
     
-    public ConditionalHideAttribute(string conditionalSourceField, bool hideInInspector, Condition condition)
+    public ConditionalHideAttribute(string conditionalSourceField, bool hideInInspector, ConditionalHide condition)
     {
         this.ConditionalSourceField = conditionalSourceField;
         this.HideInInspector = hideInInspector;
@@ -83,26 +80,32 @@ public class ConditionalHideAttribute : PropertyModifierAttribute
 
 #if UNITY_EDITOR
 
+    struct Warning
+    {
+        public bool sourceProp;
+        public bool typeProp;
+        public bool arrayProp;
+    }
+
+    Warning warning;
     bool wasEnabled;
-
-    public override bool BeforeGUI(ref Rect position, SerializedProperty property, GUIContent label, bool visible)
-    {
-        bool enabled = GetConditionalHideAttributeResult(property);
-        bool wasEnabled = GUI.enabled;
-        GUI.enabled = enabled;
-        return (!HideInInspector || enabled) && visible;
-    }
-
-    public override void AfterGUI(Rect position, SerializedProperty property, GUIContent label)
-    {
-        GUI.enabled = wasEnabled;
-    }
 
     public override float GetHeight(SerializedProperty property, GUIContent label, float height)
     {
         bool enabled = GetConditionalHideAttributeResult(property);
 
-        if (!HideInInspector || enabled)
+        if (!warning.arrayProp)
+        {
+            string[] variableName = property.propertyPath.Split('.');
+            SerializedProperty rootProp = property.serializedObject.FindProperty(variableName[0]);
+            if (rootProp.isArray)
+            {
+                Debug.LogWarning("Property ["+ variableName[0] + "] couldn't be handled properly since it is an array.");
+            }
+            warning.arrayProp = true;
+        }
+
+        if (enabled || !HideInInspector)
         {
             return height;
         }
@@ -112,24 +115,98 @@ public class ConditionalHideAttribute : PropertyModifierAttribute
         }
     }
 
+    public override bool BeforeGUI(ref Rect position, SerializedProperty property, GUIContent label, bool visible) {
+        bool enabled = GetConditionalHideAttributeResult(property);
+        wasEnabled = GUI.enabled;
+        GUI.enabled = enabled;
+        return visible && (enabled || !HideInInspector);
+    }
+
+    public override void AfterGUI(Rect position, SerializedProperty property, GUIContent label) {
+        GUI.enabled = wasEnabled;
+    }
+    
     private bool GetConditionalHideAttributeResult(SerializedProperty property)
     {
         bool enabled = true;
-        string propertyPath = property.propertyPath; //returns the property path of the property we want to apply the attribute to
-        string conditionPath = propertyPath.Replace(property.name, ConditionalSourceField); //changes the path to the conditional source property path
-        SerializedProperty sourcePropertyValue = property.serializedObject.FindProperty(conditionPath);
+
+
+        SerializedProperty sourcePropertyValue = FindSerializableProperty(property);
 
         if (sourcePropertyValue != null)
         {
-            enabled = sourcePropertyValue.boolValue;
-            if (ApplyCondition == ConditionalHideAttribute.Condition.False) enabled = !enabled;
+            enabled = CheckPropertyType(sourcePropertyValue);
         }
         else
         {
-            Debug.LogWarning("Attempting to use a ConditionalHideAttribute but no matching SourcePropertyValue found in object: " + ConditionalSourceField);
+            var propertyInfo = property.serializedObject.targetObject.GetType().GetProperty(ConditionalSourceField,
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+
+            if (propertyInfo != null)
+            {
+                var value = propertyInfo.GetValue(property.serializedObject.targetObject);
+                if (!CheckValueType(value, out enabled)) {
+                    if (warning.sourceProp)
+                    {
+                        Debug.LogWarning("Attempting to use a ConditionalHideAttribute but no matching SourcePropertyValue found in object: " + ConditionalSourceField);
+                        warning.sourceProp = true;
+                    }
+                }
+            }
         }
+
         return enabled;
     }
-#endif
 
+    private SerializedProperty FindSerializableProperty(SerializedProperty property)
+    {
+        string propertyPath = property.propertyPath;
+        int idx = propertyPath.LastIndexOf('.');
+        if (idx == -1)
+        {
+            return property.serializedObject.FindProperty(ConditionalSourceField);
+        }
+        else
+        {
+            string[] variableName = property.propertyPath.Split('.');
+            SerializedProperty rootProp = property.serializedObject.FindProperty(variableName[0]);
+            if (rootProp.isArray) {
+                return rootProp.serializedObject.FindProperty(ConditionalSourceField);
+            }
+            propertyPath = propertyPath.Substring(0, idx);
+            return property.serializedObject.FindProperty(propertyPath)
+            .FindPropertyRelative(ConditionalSourceField);
+        }
+    }
+
+    private bool CheckPropertyType(SerializedProperty _propertyValue)
+    {
+        // Add other data types to handel them here.
+        SerializedPropertyType _propType = _propertyValue.propertyType;
+        if (_propType == SerializedPropertyType.Boolean)
+        {
+            return _propertyValue.boolValue;
+        }
+        else
+        {
+            if (!warning.typeProp)
+            {
+                Debug.LogError("Data type of the property used for conditional hiding [" + _propertyValue.propertyType + "] is currently not supported");
+                warning.typeProp = true;
+            }
+            return true;
+        }
+    }
+
+    private bool CheckValueType(object val, out bool retVal)
+    {
+        retVal = false;
+        if (val is bool)
+        {
+            retVal = (bool)val;
+            return true;
+        }
+        return false;
+    }
+#endif
 }

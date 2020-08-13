@@ -6,10 +6,8 @@ using UnityEditor;
 namespace UnityEngine
 {
     [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = true)]
-    public abstract class PropertyModifierAttribute : Attribute
+    public abstract class PropertyModifierAttribute : ModifiablePropertyAttribute
     {
-        public int order { get; set; }
-
 #if UNITY_EDITOR
         public virtual float GetHeight(SerializedProperty property, GUIContent label, float height)
         {
