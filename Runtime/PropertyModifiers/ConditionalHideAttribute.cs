@@ -106,13 +106,9 @@ public class ConditionalHideAttribute : PropertyModifierAttribute
         }
 
         if (enabled || !HideInInspector)
-        {
             return height;
-        }
-        else
-        {
-            return -EditorGUIUtility.standardVerticalSpacing;
-        }
+
+        return -EditorGUIUtility.standardVerticalSpacing;
     }
 
     public override bool BeforeGUI(ref Rect position, SerializedProperty property, GUIContent label, bool visible) {
@@ -129,8 +125,7 @@ public class ConditionalHideAttribute : PropertyModifierAttribute
     private bool GetConditionalHideAttributeResult(SerializedProperty property)
     {
         bool enabled = true;
-
-
+        
         SerializedProperty sourcePropertyValue = FindSerializableProperty(property);
 
         if (sourcePropertyValue != null)
@@ -154,7 +149,7 @@ public class ConditionalHideAttribute : PropertyModifierAttribute
                 }
             }
         }
-
+        if (ApplyCondition == ConditionalHide.False) enabled = !enabled;
         return enabled;
     }
 
