@@ -4,11 +4,14 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-[AttributeUsage(AttributeTargets.Field, Inherited = true)]
-public class ModifiablePropertyAttribute : PropertyAttribute
+namespace com.dgn.UnityAttributes
 {
-    public override string ToString()
+    [AttributeUsage(AttributeTargets.Field, Inherited = true)]
+    public class ModifiablePropertyAttribute : PropertyAttribute
     {
-        return this.GetType().Name;
+        public override string ToString()
+        {
+            return this.GetType().Name;
+        }
     }
 }
