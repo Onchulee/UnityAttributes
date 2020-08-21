@@ -1,0 +1,15 @@
+{
+    "name": "com.dgn.UnityAttributes.Editor",
+    "references": [
+        "GUID:2047f174577971d4081d3cf7217cf4f6"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
