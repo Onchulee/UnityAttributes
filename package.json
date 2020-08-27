@@ -11,5 +11,14 @@
         "name": "Dragan O. Wip",
         "email": "onchulee.wip@hotmail.com",
         "url": "https://github.com/Onchulee/UnityAttributes#readme"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Onchulee/UnityAttributes.git"
+    },
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/Onchulee/UnityAttributes/issues"
+    },
+    "homepage": "https://github.com/Onchulee/UnityAttributes#readme"
 }
