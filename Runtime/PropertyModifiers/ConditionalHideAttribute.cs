@@ -106,7 +106,7 @@ namespace com.dgn.UnityAttributes
                 warning.arrayProp = true;
             }
 
-            if (enabled || !HideInInspector)
+            if (enabled || HideInInspector == false)
                 return height;
 
             return -EditorGUIUtility.standardVerticalSpacing;
@@ -117,7 +117,7 @@ namespace com.dgn.UnityAttributes
             bool enabled = GetConditionalHideAttributeResult(property);
             wasEnabled = GUI.enabled;
             GUI.enabled = enabled;
-            return visible && (enabled || !HideInInspector);
+            return visible && (enabled || HideInInspector == false);
         }
 
         public override void AfterGUI(Rect position, SerializedProperty property, GUIContent label)
